@@ -29,8 +29,14 @@ const PartnerLinks: React.FC<PartnerLinksProps> = ({ partnerLinks, productTitle 
   }
 
   const handlePartnerClick = (linkId: string) => {
+    // URL du backend avec fallback
+    const apiUrl = import.meta.env.VITE_API_URL || 'https://ecolojia-backendv1.onrender.com';
+    const trackingUrl = `${apiUrl}/api/track/${linkId}`;
+    
+    console.log('🔗 Tracking URL:', trackingUrl);
+    
     // Track the click through our backend
-    window.open(`${import.meta.env.VITE_API_URL}/api/track/${linkId}`, '_blank');
+    window.open(trackingUrl, '_blank');
   };
 
   const getEthicalBadgeColor = (score: number) => {
@@ -49,7 +55,7 @@ const PartnerLinks: React.FC<PartnerLinksProps> = ({ partnerLinks, productTitle 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
       <div className="flex items-center gap-2 mb-4">
-        <Shield className="w-5 h-5 text-eco-primary" />
+        <Shield className="w-5 h-5 text-eco-leaf" />
         <h3 className="text-lg font-semibold text-gray-900">
           Où acheter ce produit
         </h3>

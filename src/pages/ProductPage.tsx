@@ -1,29 +1,45 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ExternalLink, MapPin, Star, Loader, AlertCircle } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { ArrowLeft, Leaf, Users, Shield } from 'lucide-react';
 import ConfidenceBadge from '../components/ConfidenceBadge';
-import { cleanText } from '../lib/algolia';
+import PartnerLinks from '../components/PartnerLinks';
 
-type Product = {
+interface Partner {
+  id: string;
+  name: string;
+  website?: string;
+  commission_rate: number;
+  ethical_score: number;
+}
+
+interface PartnerLink {
+  id: string;
+  url: string;
+  tracking_id?: string;
+  commission_rate: number;
+  clicks: number;
+  partner: Partner;
+}
+
+interface Product {
   id: string;
   title: string;
+  slug: string;
   description: string;
-  image_url?: string;
-  images: string[];
+  brand?: string;
+  category?: string;
   tags: string[];
-  eco_score: number;
-  confidence_pct: number;
-  confidence_color: 'green' | 'yellow' | 'red';
-  zones_dispo: string[];
+  image_url?: string;
+  eco_score?: number;
+  ai_confidence?: number;
+  confidence_pct?: number;
+  confidence_color?: 'green' | 'yellow' | 'red';
+  verified_status: 'verified' | 'manual_review' | 'rejected';
   resume_fr?: string;
-  criteria_score?: Record<string, number>;
-  verified_status?: string;
-  partnerLinks?: { id: string; url: string }[];
-};
+  partnerLinks: PartnerLink[];
+}
 
 const ProductPage: React.FC = () => {
-  const { t } = useTranslation();
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const [product, setProduct] = useState<Product | null>(null);
@@ -31,72 +47,53 @@ const ProductPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchProduct() {
-      if (!slug) {
-        setError(t('common.productNotFound'));
-        setLoading(false);
-        return;
-      }
+    if (!slug) {
+      setError('Aucun produit spécifié');
+      setLoading(false);
+      return;
+    }
 
+    const fetchProduct = async () => {
       try {
-        setLoading(true);
-        setError(null);
-
-        const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/products/${slug}`;
-        console.log('🔍 Appel API:', apiUrl);
-
-        const res = await fetch(apiUrl, {
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (!res.ok) {
-          if (res.status === 404) throw new Error(t('common.productNotFound'));
-          throw new Error(`Erreur serveur: ${res.status}`);
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/products/${slug}`);
+        
+        if (!response.ok) {
+          throw new Error(`Erreur ${response.status}: Produit non trouvé`);
         }
 
-        const contentType = res.headers.get('content-type') || '';
-        if (!contentType.includes('application/json')) {
-          throw new Error('Réponse invalide du serveur');
+        const data = await response.json();
+        console.log('✅ Données produit reçues:', data);
+        
+        // L'API peut retourner soit data.product soit directement data
+        const productData = data.product || data;
+        
+        // Convertir les scores en nombres si nécessaire
+        if (productData.eco_score && typeof productData.eco_score === 'string') {
+          productData.eco_score = parseFloat(productData.eco_score);
         }
-
-        const data = await res.json();
-        setProduct(data);
-        console.log('✅ Produit chargé:', data);
-
-      } catch (err: any) {
-        console.error('❌ Erreur chargement produit:', err);
-        setError(err.message || 'Erreur de chargement');
+        if (productData.ai_confidence && typeof productData.ai_confidence === 'string') {
+          productData.ai_confidence = parseFloat(productData.ai_confidence);
+        }
+        
+        setProduct(productData);
+      } catch (err) {
+        console.error('❌ Erreur lors du chargement du produit:', err);
+        setError(err instanceof Error ? err.message : 'Erreur lors du chargement');
       } finally {
         setLoading(false);
       }
-    }
+    };
 
     fetchProduct();
-  }, [slug, t]);
-
-  const renderEcoStars = (score: number) => {
-    const normalizedScore = Math.min(5, Math.max(0, score * 5));
-    return Array.from({ length: 5 }, (_, i) => (
-      <Star
-        key={i}
-        className={`h-4 w-4 ${i < normalizedScore ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
-      />
-    ));
-  };
-
-  const trackingUrl = product?.partnerLinks?.[0]?.id
-    ? `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/track/${product.partnerLinks[0].id}`
-    : null;
+  }, [slug]);
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <Loader className="h-8 w-8 animate-spin text-eco-leaf mx-auto mb-4" />
-          <p className="text-eco-text">{t('common.loadingProduct')}</p>
+      <div className="min-h-screen bg-white py-16">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-eco-leaf"></div>
+          </div>
         </div>
       </div>
     );
@@ -104,25 +101,17 @@ const ProductPage: React.FC = () => {
 
   if (error || !product) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center max-w-md">
-          <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-eco-text mb-2">{t('common.productNotFound')}</h2>
-          <p className="text-gray-600 mb-4">
-            {error || t('common.productNotFoundDesc')}
-          </p>
-          <div className="space-y-2">
+      <div className="min-h-screen bg-white py-16">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold text-eco-text mb-4">Produit non trouvé</h1>
+            <p className="text-eco-text/70 text-lg mb-6">{error}</p>
             <button
               onClick={() => navigate('/')}
-              className="block w-full bg-eco-leaf text-white px-6 py-2 rounded-lg hover:bg-eco-leaf/90 transition-colors"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-eco-leaf text-white rounded-lg hover:bg-eco-leaf/90 transition-colors"
             >
-              {t('common.backToHome')}
-            </button>
-            <button
-              onClick={() => navigate(-1)}
-              className="block w-full border border-eco-leaf/20 text-eco-text px-6 py-2 rounded-lg hover:bg-eco-leaf/10 transition-colors"
-            >
-              {t('common.previousPage')}
+              <ArrowLeft className="w-4 h-4" />
+              Retour à l'accueil
             </button>
           </div>
         </div>
@@ -130,156 +119,143 @@ const ProductPage: React.FC = () => {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <main className="max-w-6xl mx-auto px-4 py-8">
-        <button
-          onClick={() => navigate(-1)}
-          className="mb-6 flex items-center gap-2 text-eco-leaf hover:text-eco-text transition-colors group"
-        >
-          <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-          {t('common.back')}
-        </button>
+  const fallbackImage = 'https://res.cloudinary.com/dma0ywmfb/image/upload/w_600,h_600,c_fill,q_auto,f_auto/v1750024282/placeholder-product_nkxe8m.jpg';
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+  return (
+    <div className="min-h-screen bg-white py-16">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        {/* Header avec retour */}
+        <div className="mb-8">
+          <button
+            onClick={() => navigate('/')}
+            className="inline-flex items-center gap-2 text-eco-text/70 hover:text-eco-leaf transition-colors mb-6"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Retour aux résultats
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-12">
+          {/* Image du produit */}
           <div className="space-y-4">
-            <div className="relative">
+            <div className="aspect-square rounded-2xl overflow-hidden bg-gray-100 border border-eco-leaf/20">
               <img
-                src={product.image_url?.trim() || product.images?.[0] || '/placeholder.jpg'}
-                alt={cleanText(product.title)}
-                className="w-full h-80 object-cover rounded-xl shadow-sm"
-                loading="lazy"
+                src={product.image_url || fallbackImage}
+                alt={product.title}
+                className="w-full h-full object-cover"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  target.src = '/placeholder.jpg';
+                  target.src = fallbackImage;
                 }}
               />
-
-              {product.verified_status === 'verified' && (
-                <div className="absolute top-4 right-4 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium border border-green-200">
-                  ✅ {t('common.verified')}
-                </div>
-              )}
-
-              {product.confidence_pct && product.confidence_color && (
-                <div className="absolute top-4 left-4">
-                  <ConfidenceBadge 
-                    pct={product.confidence_pct} 
-                    color={product.confidence_color as 'green' | 'yellow' | 'red'} 
-                  />
-                </div>
-              )}
             </div>
           </div>
 
+          {/* Informations du produit */}
           <div className="space-y-6">
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-eco-leaf/10">
-              <div className="flex items-start justify-between mb-4">
-                <h1 className="text-2xl lg:text-3xl font-bold text-eco-text pr-4">
-                  {cleanText(product.title)}
-                </h1>
+            <div>
+              {product.brand && (
+                <p className="text-sm text-eco-text/60 uppercase tracking-wider mb-2">
+                  {product.brand}
+                </p>
+              )}
+              <h1 className="text-4xl font-bold text-eco-text mb-4">
+                {product.title}
+              </h1>
+              
+              {/* Badges */}
+              <div className="flex items-center gap-4 mb-6">
+                <ConfidenceBadge
+                  pct={product.confidence_pct || 0}
+                  color={product.confidence_color || 'yellow'}
+                />
+                {product.verified_status === 'verified' && (
+                  <div className="flex items-center gap-1 text-eco-leaf">
+                    <Shield className="w-4 h-4" />
+                    <span className="text-sm font-medium">Vérifié</span>
+                  </div>
+                )}
               </div>
-
-              <p className="text-gray-600 leading-relaxed mb-6">
-                {cleanText(product.description)}
-              </p>
-
-              {product.resume_fr && (
-                <div className="bg-eco-leaf/5 border-l-4 border-eco-leaf p-4 rounded-r-lg mb-6">
-                  <h3 className="font-semibold text-eco-text mb-2 flex items-center gap-2">
-                    🤖 {t('common.analysisAI')}
-                  </h3>
-                  <p className="text-sm text-eco-text/80 leading-relaxed">
-                    {cleanText(product.resume_fr)}
-                  </p>
-                </div>
-              )}
-
-              <div className="mb-6">
-                <div className="flex items-center gap-3 mb-2">
-                  <span className="font-semibold text-eco-text">{t('common.ecoScore')} :</span>
-                  <div className="flex items-center gap-1">
-                    {renderEcoStars(product.eco_score)}
-                  </div>
-                  <span className="text-sm text-gray-600">
-                    {(product.eco_score * 5).toFixed(1)}/5
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className="bg-eco-leaf h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${(product.eco_score || 0) * 100}%` }}
-                  />
-                </div>
-              </div>
-
-              {product.tags?.length > 0 && (
-                <div className="mb-6">
-                  <h3 className="font-semibold text-eco-text mb-3">🏷️ {t('common.characteristics')}</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {product.tags.map((tag, i) => (
-                      <span 
-                        key={i} 
-                        className="bg-eco-leaf/10 text-eco-text text-sm px-3 py-1 rounded-full border border-eco-leaf/20"
-                      >
-                        {cleanText(tag)}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {product.zones_dispo?.length > 0 && (
-                <div className="mb-6">
-                  <div className="flex items-center gap-2 mb-2">
-                    <MapPin className="h-4 w-4 text-eco-leaf" />
-                    <span className="font-semibold text-eco-text">{t('common.availableZones')} :</span>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {product.zones_dispo.map((zone, i) => (
-                      <span 
-                        key={i} 
-                        className="bg-blue-50 text-blue-700 text-sm px-2 py-1 rounded border border-blue-200"
-                      >
-                        {cleanText(zone)}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {trackingUrl ? (
-                <div className="pt-4 border-t border-gray-100">
-                  <a
-                    href={trackingUrl}
-                    className="inline-flex items-center gap-2 w-full justify-center bg-eco-leaf text-white px-6 py-3 rounded-xl hover:bg-eco-leaf/90 transition-colors font-medium shadow-sm"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {t('common.buyProduct')}
-                    <ExternalLink className="h-4 w-4" />
-                  </a>
-                  <p className="text-xs text-gray-500 mt-2 text-center">
-                    {t('common.ethicalPartner')}
-                  </p>
-                </div>
-              ) : (
-                <div className="pt-4 border-t border-gray-100 text-center">
-                  <div className="text-sm text-gray-400 mb-2">
-                    {t('common.noAffiliateLink')}
-                  </div>
-                  <button
-                    onClick={() => navigate('/')}
-                    className="inline-flex items-center gap-2 px-4 py-2 border border-eco-leaf/20 text-eco-leaf rounded-lg hover:bg-eco-leaf/10 transition-colors"
-                  >
-                    {t('common.seeOtherProducts')}
-                  </button>
-                </div>
-              )}
             </div>
+
+            {/* Score écologique */}
+            {product.eco_score && (
+              <div className="bg-eco-leaf/5 p-6 rounded-xl border border-eco-leaf/20">
+                <div className="flex items-start gap-3">
+                  <Leaf className="h-6 w-6 text-eco-leaf mt-1 flex-shrink-0" />
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-eco-text mb-3">
+                      Score écologique
+                    </h3>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 bg-eco-leaf/20 rounded-full h-4">
+                        <div
+                          className="bg-eco-leaf h-4 rounded-full transition-all duration-500"
+                          style={{ width: `${(product.eco_score * 100)}%` }}
+                        ></div>
+                      </div>
+                      <span className="font-bold text-eco-text">
+                        {(product.eco_score * 100).toFixed(0)}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Description */}
+            <div>
+              <h3 className="text-xl font-semibold text-eco-text mb-3">Description</h3>
+              <p className="text-eco-text/80 leading-relaxed">
+                {product.description}
+              </p>
+            </div>
+
+            {/* Tags */}
+            {product.tags && product.tags.length > 0 && (
+              <div>
+                <h3 className="text-xl font-semibold text-eco-text mb-3">Caractéristiques</h3>
+                <div className="flex flex-wrap gap-2">
+                  {product.tags.map((tag, index) => (
+                    <span
+                      key={index}
+                      className="px-3 py-1.5 bg-eco-leaf/10 text-eco-leaf rounded-full text-sm font-medium border border-eco-leaf/20"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Résumé IA */}
+            {product.resume_fr && (
+              <div className="bg-blue-50 p-6 rounded-xl border border-blue-200">
+                <div className="flex items-start gap-3">
+                  <Users className="h-6 w-6 text-blue-600 mt-1 flex-shrink-0" />
+                  <div>
+                    <h3 className="text-lg font-semibold text-blue-900 mb-2">
+                      Analyse IA
+                    </h3>
+                    <p className="text-blue-800 leading-relaxed">
+                      {product.resume_fr}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
-      </main>
+
+        {/* Liens partenaires */}
+        <section className="border-t border-gray-200 pt-8">
+          <PartnerLinks 
+            partnerLinks={product.partnerLinks} 
+            productTitle={product.title}
+          />
+        </section>
+      </div>
     </div>
   );
 };

@@ -4,7 +4,7 @@ import { Leaf, Search, X, ChevronDown, Filter, Grid, List } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 // Import des composants existants
-import AlgoliaProductCard from '../components/AlgoliaProductCard';
+import ProductHit from '../components/ProductHit';
 import NoResultsFound from '../components/NoResultsFound';
 
 // Import de la configuration Algolia
@@ -479,7 +479,7 @@ const HomePage: React.FC = () => {
                     }}
                     onClick={() => handleProductClick(hit)}
                   >
-                    <AlgoliaProductCard hit={hit} />
+                    <ProductHit hit={hit} />
                   </div>
                 ))}
               </div>

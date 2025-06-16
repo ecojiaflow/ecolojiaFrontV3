@@ -63,7 +63,6 @@ export const fr = {
     // Ajouts pour ProductPage
     productNotFound: 'Produit introuvable',
     productNotFoundDesc: 'Ce produit n\'existe pas ou n\'est plus disponible.',
-    backToHome: 'Retour à l\'accueil',
     previousPage: 'Page précédente',
     loadingProduct: 'Chargement du produit...',
     characteristics: 'Caractéristiques',

@@ -2,6 +2,7 @@ import React from 'react';
 import { ExternalLink, CheckCircle, Tag, Shield, MapPin } from 'lucide-react';
 import { Product } from '../types';
 import { useTranslation } from 'react-i18next';
+import ConfidenceBadge from "../components/ConfidenceBadge";
 
 interface ProductCardProps {
   product: Product;
@@ -12,19 +13,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) => {
   const { t } = useTranslation();
 
   const scoreColor = () => {
-    if (!product.ethicalScore) return 'bg-red-500';
-    if (product.ethicalScore >= 4.5) return 'bg-eco-leaf';
-    if (product.ethicalScore >= 4) return 'bg-eco-glow';
-    if (product.ethicalScore >= 3.5) return 'bg-yellow-400';
-    if (product.ethicalScore >= 3) return 'bg-yellow-500';
+    const score = product.ethicalScore || 0;
+    if (score >= 0.8) return 'bg-eco-leaf';
+    if (score >= 0.6) return 'bg-eco-glow';
+    if (score >= 0.4) return 'bg-yellow-400';
+    if (score >= 0.2) return 'bg-yellow-500';
     return 'bg-red-500';
-  };
-
-  const getAiConfidenceColor = () => {
-    if (!product.aiConfidence) return 'bg-gray-100 text-gray-600';
-    if (product.aiConfidence >= 0.8) return 'bg-green-100 text-green-800 border-green-200';
-    if (product.aiConfidence >= 0.6) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-    return 'bg-red-100 text-red-800 border-red-200';
   };
 
   const productName = product.nameKey ? t(product.nameKey) : product.nameKey || t('common.unavailable');
@@ -34,10 +28,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) => {
     ? product.tagsKeys.map(tagKey => t(tagKey) || tagKey || t('common.unknownTag'))
     : [];
 
-  // ✅ récupération du linkId du lien affilié
+  const imageUrl = product.image_url?.trim() || product.images?.[0] || '/placeholder-image.jpg';
+
   const linkId = product.partnerLinks?.[0]?.id;
   const trackingUrl = linkId 
-    ? `${import.meta.env.VITE_API_BASE_URL}/api/track/${linkId}` 
+    ? `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/track/${linkId}` 
     : null;
 
   return (
@@ -51,13 +46,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) => {
     >
       <div className="relative h-48 overflow-hidden">
         <img 
-          src={product.image || '/placeholder-image.jpg'} 
+          src={imageUrl}
           alt={t('accessibility.productImage', { name: productName })}
           className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             target.src = '/placeholder-image.jpg';
           }}
+          loading="lazy"
         />
 
         {product.verified && (
@@ -66,10 +62,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) => {
           </div>
         )}
 
-        {product.aiConfidence !== undefined && (
-          <div className={`absolute top-3 left-3 ${getAiConfidenceColor()} border rounded-full px-2 py-1 text-xs font-medium flex items-center shadow-sm`}>
-            <Shield size={12} className="mr-1" />
-            IA {Math.round(product.aiConfidence * 100)}%
+        {product.confidence_pct !== undefined && product.confidence_color && (
+          <div className="absolute top-3 left-3">
+            <ConfidenceBadge pct={product.confidence_pct} color={product.confidence_color} />
           </div>
         )}
 
@@ -139,3 +134,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) => {
 };
 
 export default ProductCard;
+
+
+
+

@@ -9,6 +9,7 @@ type Product = {
   id: string;
   title: string;
   description: string;
+  image_url?: string;
   images: string[];
   tags: string[];
   eco_score: number;
@@ -40,21 +41,19 @@ const ProductPage: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-        
-        const apiUrl = `${import.meta.env.VITE_API_BASE_URL || 'https://ecolojia-backend.onrender.com'}/api/products/${slug}`;
+
+        const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/products/${slug}`;
         console.log('🔍 Appel API:', apiUrl);
-        
+
         const res = await fetch(apiUrl, {
           headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json'
           }
         });
-        
+
         if (!res.ok) {
-          if (res.status === 404) {
-            throw new Error(t('common.productNotFound'));
-          }
+          if (res.status === 404) throw new Error(t('common.productNotFound'));
           throw new Error(`Erreur serveur: ${res.status}`);
         }
 
@@ -66,7 +65,7 @@ const ProductPage: React.FC = () => {
         const data = await res.json();
         setProduct(data);
         console.log('✅ Produit chargé:', data);
-        
+
       } catch (err: any) {
         console.error('❌ Erreur chargement produit:', err);
         setError(err.message || 'Erreur de chargement');
@@ -89,10 +88,9 @@ const ProductPage: React.FC = () => {
   };
 
   const trackingUrl = product?.partnerLinks?.[0]?.id
-    ? `${import.meta.env.VITE_API_BASE_URL || 'https://ecolojia-backend.onrender.com'}/api/track/${product.partnerLinks[0].id}`
+    ? `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/track/${product.partnerLinks[0].id}`
     : null;
 
-  // État de chargement
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -104,7 +102,6 @@ const ProductPage: React.FC = () => {
     );
   }
 
-  // État d'erreur
   if (error || !product) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -136,7 +133,6 @@ const ProductPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <main className="max-w-6xl mx-auto px-4 py-8">
-        {/* Bouton retour */}
         <button
           onClick={() => navigate(-1)}
           className="mb-6 flex items-center gap-2 text-eco-leaf hover:text-eco-text transition-colors group"
@@ -146,64 +142,48 @@ const ProductPage: React.FC = () => {
         </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Image du produit */}
           <div className="space-y-4">
             <div className="relative">
               <img
-                src={product.images?.[0] || '/placeholder.jpg'}
+                src={product.image_url?.trim() || product.images?.[0] || '/placeholder.jpg'}
                 alt={cleanText(product.title)}
                 className="w-full h-80 object-cover rounded-xl shadow-sm"
+                loading="lazy"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.src = '/placeholder.jpg';
                 }}
               />
+
               {product.verified_status === 'verified' && (
                 <div className="absolute top-4 right-4 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium border border-green-200">
                   ✅ {t('common.verified')}
                 </div>
               )}
-            </div>
-            
-            {/* Images supplémentaires */}
-            {product.images && product.images.length > 1 && (
-              <div className="grid grid-cols-4 gap-2">
-                {product.images.slice(1, 5).map((img, i) => (
-                  <img
-                    key={i}
-                    src={img}
-                    alt={`${cleanText(product.title)} - vue ${i + 2}`}
-                    className="w-full h-20 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = '/placeholder.jpg';
-                    }}
+
+              {product.confidence_pct && product.confidence_color && (
+                <div className="absolute top-4 left-4">
+                  <ConfidenceBadge 
+                    pct={product.confidence_pct} 
+                    color={product.confidence_color as 'green' | 'yellow' | 'red'} 
                   />
-                ))}
-              </div>
-            )}
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Détails du produit */}
           <div className="space-y-6">
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-eco-leaf/10">
-              {/* En-tête avec titre et badge confiance */}
               <div className="flex items-start justify-between mb-4">
                 <h1 className="text-2xl lg:text-3xl font-bold text-eco-text pr-4">
                   {cleanText(product.title)}
                 </h1>
-                <ConfidenceBadge 
-                  pct={product.confidence_pct} 
-                  color={product.confidence_color} 
-                />
               </div>
 
-              {/* Description */}
               <p className="text-gray-600 leading-relaxed mb-6">
                 {cleanText(product.description)}
               </p>
 
-              {/* Analyse IA */}
               {product.resume_fr && (
                 <div className="bg-eco-leaf/5 border-l-4 border-eco-leaf p-4 rounded-r-lg mb-6">
                   <h3 className="font-semibold text-eco-text mb-2 flex items-center gap-2">
@@ -215,7 +195,6 @@ const ProductPage: React.FC = () => {
                 </div>
               )}
 
-              {/* Score écologique */}
               <div className="mb-6">
                 <div className="flex items-center gap-3 mb-2">
                   <span className="font-semibold text-eco-text">{t('common.ecoScore')} :</span>
@@ -234,7 +213,6 @@ const ProductPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Tags */}
               {product.tags?.length > 0 && (
                 <div className="mb-6">
                   <h3 className="font-semibold text-eco-text mb-3">🏷️ {t('common.characteristics')}</h3>
@@ -251,7 +229,6 @@ const ProductPage: React.FC = () => {
                 </div>
               )}
 
-              {/* Zones disponibles */}
               {product.zones_dispo?.length > 0 && (
                 <div className="mb-6">
                   <div className="flex items-center gap-2 mb-2">
@@ -271,7 +248,6 @@ const ProductPage: React.FC = () => {
                 </div>
               )}
 
-              {/* Bouton d'achat */}
               {trackingUrl ? (
                 <div className="pt-4 border-t border-gray-100">
                   <a
@@ -309,3 +285,5 @@ const ProductPage: React.FC = () => {
 };
 
 export default ProductPage;
+
+

@@ -29,18 +29,14 @@ const PartnerLinks: React.FC<PartnerLinksProps> = ({ partnerLinks, productTitle 
   }
 
   const handlePartnerClick = (linkId: string) => {
-    // URL du backend avec fallback
     const apiUrl = import.meta.env.VITE_API_URL || 'https://ecolojia-backendv1.onrender.com';
     const trackingUrl = `${apiUrl}/api/track/${linkId}`;
-    
+
     console.log('🔗 Tracking URL:', trackingUrl);
-    
-    // Track the click through our backend
     window.open(trackingUrl, '_blank');
   };
 
   const getEthicalBadgeColor = (score: number) => {
-    // Convertir le score décimal (0.91) en couleur
     if (score >= 0.8) return 'bg-green-100 text-green-800';
     if (score >= 0.6) return 'bg-yellow-100 text-yellow-800';
     return 'bg-red-100 text-red-800';
@@ -72,8 +68,7 @@ const PartnerLinks: React.FC<PartnerLinksProps> = ({ partnerLinks, productTitle 
                 <h4 className="font-medium text-gray-900">
                   {link.partner.name}
                 </h4>
-                
-                {/* Badge éthique */}
+
                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getEthicalBadgeColor(link.partner.ethical_score)}`}>
                   <Star className="w-3 h-3 mr-1" />
                   {getEthicalBadgeText(link.partner.ethical_score)}

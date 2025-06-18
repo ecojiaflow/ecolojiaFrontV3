@@ -56,25 +56,23 @@ const ProductPage: React.FC = () => {
     const fetchProduct = async () => {
       try {
         const response = await fetch(`${import.meta.env.VITE_API_URL}/api/products/${slug}`);
-        
+
         if (!response.ok) {
           throw new Error(`Erreur ${response.status}: Produit non trouvé`);
         }
 
         const data = await response.json();
         console.log('✅ Données produit reçues:', data);
-        
-        // L'API peut retourner soit data.product soit directement data
+
         const productData = data.product || data;
-        
-        // Convertir les scores en nombres si nécessaire
+
         if (productData.eco_score && typeof productData.eco_score === 'string') {
           productData.eco_score = parseFloat(productData.eco_score);
         }
         if (productData.ai_confidence && typeof productData.ai_confidence === 'string') {
           productData.ai_confidence = parseFloat(productData.ai_confidence);
         }
-        
+
         setProduct(productData);
       } catch (err) {
         console.error('❌ Erreur lors du chargement du produit:', err);
@@ -124,8 +122,6 @@ const ProductPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-white py-16">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        {/* Header avec retour */}
         <div className="mb-8">
           <button
             onClick={() => navigate('/')}
@@ -137,7 +133,6 @@ const ProductPage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-12">
-          {/* Image du produit */}
           <div className="space-y-4">
             <div className="aspect-square rounded-2xl overflow-hidden bg-gray-100 border border-eco-leaf/20">
               <img
@@ -152,7 +147,6 @@ const ProductPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Informations du produit */}
           <div className="space-y-6">
             <div>
               {product.brand && (
@@ -163,8 +157,7 @@ const ProductPage: React.FC = () => {
               <h1 className="text-4xl font-bold text-eco-text mb-4">
                 {product.title}
               </h1>
-              
-              {/* Badges */}
+
               <div className="flex items-center gap-4 mb-6">
                 <ConfidenceBadge
                   pct={product.confidence_pct || 0}
@@ -179,7 +172,6 @@ const ProductPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Score écologique */}
             {product.eco_score && (
               <div className="bg-eco-leaf/5 p-6 rounded-xl border border-eco-leaf/20">
                 <div className="flex items-start gap-3">
@@ -192,7 +184,7 @@ const ProductPage: React.FC = () => {
                       <div className="flex-1 bg-eco-leaf/20 rounded-full h-4">
                         <div
                           className="bg-eco-leaf h-4 rounded-full transition-all duration-500"
-                          style={{ width: `${(product.eco_score * 100)}%` }}
+                          style={{ width: `${product.eco_score * 100}%` }}
                         ></div>
                       </div>
                       <span className="font-bold text-eco-text">
@@ -204,7 +196,6 @@ const ProductPage: React.FC = () => {
               </div>
             )}
 
-            {/* Description */}
             <div>
               <h3 className="text-xl font-semibold text-eco-text mb-3">Description</h3>
               <p className="text-eco-text/80 leading-relaxed">
@@ -212,7 +203,6 @@ const ProductPage: React.FC = () => {
               </p>
             </div>
 
-            {/* Tags */}
             {product.tags && product.tags.length > 0 && (
               <div>
                 <h3 className="text-xl font-semibold text-eco-text mb-3">Caractéristiques</h3>
@@ -229,7 +219,6 @@ const ProductPage: React.FC = () => {
               </div>
             )}
 
-            {/* Résumé IA */}
             {product.resume_fr && (
               <div className="bg-blue-50 p-6 rounded-xl border border-blue-200">
                 <div className="flex items-start gap-3">
@@ -248,7 +237,6 @@ const ProductPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Liens partenaires */}
         <section className="border-t border-gray-200 pt-8">
           <PartnerLinks 
             partnerLinks={product.partnerLinks} 
@@ -261,5 +249,6 @@ const ProductPage: React.FC = () => {
 };
 
 export default ProductPage;
+
 
 

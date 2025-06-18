@@ -28,11 +28,11 @@ const PartnerLinks: React.FC<PartnerLinksProps> = ({ partnerLinks, productTitle 
     return null;
   }
 
-  const handlePartnerClick = (linkId: string) => {
+  const handlePartnerClick = (link: PartnerLink) => {
     const apiUrl = import.meta.env.VITE_API_URL || 'https://ecolojia-backendv1.onrender.com';
-    const trackingUrl = `${apiUrl}/api/track/${linkId}`;
+    const trackingUrl = `${apiUrl}/api/track/${link.id}`;
 
-    console.log('🔗 Tracking URL:', trackingUrl);
+    console.log('🔗 Tracking + Redirection vers lien partenaire:', trackingUrl);
     window.open(trackingUrl, '_blank');
   };
 
@@ -83,7 +83,7 @@ const PartnerLinks: React.FC<PartnerLinksProps> = ({ partnerLinks, productTitle 
             </div>
 
             <button
-              onClick={() => handlePartnerClick(link.id)}
+              onClick={() => handlePartnerClick(link)}
               className="flex items-center gap-2 px-4 py-2 bg-eco-leaf text-white rounded-lg hover:bg-eco-leaf/90 transition-colors"
             >
               Voir l'offre

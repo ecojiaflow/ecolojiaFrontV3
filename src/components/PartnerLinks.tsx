@@ -28,12 +28,13 @@ const PartnerLinks: React.FC<PartnerLinksProps> = ({ partnerLinks, productTitle 
     return null;
   }
 
-  const handlePartnerClick = (link: PartnerLink) => {
-    const apiUrl = import.meta.env.VITE_API_URL || 'https://ecolojia-backendv1.onrender.com';
-    const trackingUrl = `${apiUrl}/api/track/${link.id}`;
+ const apiUrl =
+  import.meta.env.VITE_API_URL?.toString() || 'http://localhost:57840';
 
-    console.log('🔗 Tracking + Redirection vers lien partenaire:', trackingUrl);
-    window.open(trackingUrl, '_blank');
+
+  const handlePartnerClick = (link: PartnerLink) => {
+    const trackingUrl = `${apiUrl}/api/track/${link.id}`;
+    window.open(trackingUrl, '_blank', 'noopener,noreferrer');
   };
 
   const getEthicalBadgeColor = (score: number) => {
@@ -77,7 +78,9 @@ const PartnerLinks: React.FC<PartnerLinksProps> = ({ partnerLinks, productTitle 
 
               {link.partner.website && (
                 <p className="text-sm text-gray-500">
-                  {link.partner.website.replace('https://', '').replace('www.', '')}
+                  {link.partner.website
+                    .replace(/^https?:\/\//, '')
+                    .replace(/^www\./, '')}
                 </p>
               )}
             </div>

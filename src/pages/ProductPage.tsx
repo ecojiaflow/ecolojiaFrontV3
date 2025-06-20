@@ -4,7 +4,7 @@ import { ArrowLeft, Leaf, Users, Shield } from "lucide-react";
 
 import ConfidenceBadge from "../components/ConfidenceBadge";
 import PartnerLinks from "../components/PartnerLinks";
-
+import SimilarProductsCarousel from "../components/SimilarProductsCarousel";
 interface Partner {
   id: string;
   name: string;
@@ -168,7 +168,9 @@ const ProductPage: React.FC = () => {
             <div className="bg-eco-leaf/10 p-4 rounded-lg border border-eco-leaf/20">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium text-eco-text">Score écologique</p>
-                <span className="font-bold text-eco-text">{(product.eco_score * 100).toFixed(0)}%</span>
+                <span className="font-bold text-eco-text">
+                  {(product.eco_score * 100).toFixed(0)}%
+                </span>
               </div>
               <div className="w-full bg-eco-leaf/20 h-3 mt-2 rounded-full overflow-hidden">
                 <div
@@ -213,6 +215,11 @@ const ProductPage: React.FC = () => {
 
       <div className="mt-12 border-t pt-6">
         <PartnerLinks partnerLinks={product.partnerLinks} productTitle={product.title} />
+      </div>
+
+      {/* ✅ Bloc suggestions similaires */}
+      <div className="mt-12 border-t pt-6">
+        <SimilarProductsCarousel productId={product.id} />
       </div>
     </div>
   );

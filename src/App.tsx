@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import ErrorBoundary from './components/ErrorBoundary'; // ✅ Import ajouté
 import Navbar from './components/Navbar';
 import CategoryNavigation from './components/CategoryNavigation';
 import Footer from './components/Footer';
@@ -12,34 +13,36 @@ import TermsPage from './pages/TermsPage';
 import LegalPage from './pages/LegalPage';
 import ProductPage from './pages/ProductPage';
 import StatsPage from './pages/StatsPage';
-import CategoryPage from './pages/CategoryPage'; // ✅ Vraie page catégorie
+import CategoryPage from './pages/CategoryPage';
 
 import './index.css';
 
 function App() {
   return (
-    <Router>
-      <div className="min-h-screen bg-gradient-to-br from-eco-leaf/5 to-white flex flex-col">
-        <Navbar />
-        <CategoryNavigation />
+    <ErrorBoundary> {/* ✅ Wrapper ajouté */}
+      <Router>
+        <div className="min-h-screen bg-gradient-to-br from-eco-leaf/5 to-white flex flex-col">
+          <Navbar />
+          <CategoryNavigation />
 
-        <main className="flex-1">
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/privacy" element={<PrivacyPage />} />
-            <Route path="/terms" element={<TermsPage />} />
-            <Route path="/legal" element={<LegalPage />} />
-            <Route path="/product/:slug" element={<ProductPage />} />
-            <Route path="/stats" element={<StatsPage />} />
-            <Route path="/category/:category" element={<CategoryPage />} /> {/* ✅ Vraie page */}
-          </Routes>
-        </main>
+          <main className="flex-1">
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/privacy" element={<PrivacyPage />} />
+              <Route path="/terms" element={<TermsPage />} />
+              <Route path="/legal" element={<LegalPage />} />
+              <Route path="/product/:slug" element={<ProductPage />} />
+              <Route path="/stats" element={<StatsPage />} />
+              <Route path="/category/:category" element={<CategoryPage />} />
+            </Routes>
+          </main>
 
-        <Footer />
-        <CookieBanner />
-      </div>
-    </Router>
+          <Footer />
+          <CookieBanner />
+        </div>
+      </Router>
+    </ErrorBoundary>
   );
 }
 

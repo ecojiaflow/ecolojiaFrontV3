@@ -4,6 +4,17 @@ import { Search, Filter, Grid, List } from 'lucide-react';
 import { CATEGORIES, CategoryType } from '../types/categories';
 import { Product } from '../types';
 import { fetchRealProducts } from '../api/realApi';
+import LoadingSpinner from '../components/LoadingSpinner';
+import { ProductGridSkeleton } from '../components/ProductCardSkeleton';
+import AdvancedFilters from '../components/AdvancedFilters'; // ✅ Import ajouté
+
+interface FilterState {
+  priceRange: [number, number];
+  minScore: number;
+  verified: boolean | null;
+  tags: string[];
+  zones: string[];
+}
 
 const CategoryPage: React.FC = () => {
   const { category } = useParams<{ category: string }>();
@@ -11,6 +22,14 @@ const CategoryPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [filtersOpen, setFiltersOpen] = useState(false); // ✅ État filtres
+  const [filters, setFilters] = useState<FilterState>({ // ✅ État filtres
+    priceRange: [0, 100],
+    minScore: 0,
+    verified: null,
+    tags: [],
+    zones: []
+  });
 
   const categoryConfig = category ? CATEGORIES[category as CategoryType] : null;
 
@@ -23,10 +42,8 @@ const CategoryPage: React.FC = () => {
   const loadCategoryProducts = async () => {
     try {
       setLoading(true);
-      // Pour l'instant, on charge tous les produits et on filtre côté client
       const allProducts = await fetchRealProducts();
       
-      // Filtrage par catégorie (temporaire jusqu'à ce que l'API supporte le filtrage)
       const categoryProducts = allProducts.filter(product => 
         product.category === category || 
         product.tagsKeys.some(tag => 
@@ -43,11 +60,50 @@ const CategoryPage: React.FC = () => {
     }
   };
 
-  const filteredProducts = products.filter(product =>
-    product.nameKey.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    product.brandKey.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    product.tagsKeys.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  // ✅ FONCTION DE FILTRAGE AVANCÉE
+  const getFilteredProducts = () => {
+    return products.filter(product => {
+      // Recherche textuelle
+      const matchesSearch = 
+        product.nameKey.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.brandKey.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.tagsKeys.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
+
+      if (!matchesSearch) return false;
+
+      // Filtre score minimum
+      const productScore = (product.ethicalScore / 5) * 100; // Conversion vers pourcentage
+      if (productScore < filters.minScore) return false;
+
+      // Filtre prix
+      if (product.price < filters.priceRange[0] || product.price > filters.priceRange[1]) return false;
+
+      // Filtre vérification
+      if (filters.verified !== null && product.verified !== filters.verified) return false;
+
+      // Filtre tags
+      if (filters.tags.length > 0) {
+        const hasMatchingTag = filters.tags.some(filterTag =>
+          product.tagsKeys.some(productTag => 
+            productTag.toLowerCase().includes(filterTag.toLowerCase())
+          )
+        );
+        if (!hasMatchingTag) return false;
+      }
+
+      // Filtre zones
+      if (filters.zones.length > 0) {
+        const hasMatchingZone = filters.zones.some(filterZone =>
+          product.zonesDisponibles?.includes(filterZone)
+        );
+        if (!hasMatchingZone) return false;
+      }
+
+      return true;
+    });
+  };
+
+  const filteredProducts = getFilteredProducts();
 
   if (!categoryConfig) {
     return (
@@ -75,7 +131,6 @@ const CategoryPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Critères spécialisés */}
           <div className="flex flex-wrap gap-2 mb-6">
             <span className="text-sm text-gray-600">Critères importants :</span>
             {categoryConfig.criteria.map(criterion => (
@@ -89,7 +144,7 @@ const CategoryPage: React.FC = () => {
           </div>
 
           {/* Barre de recherche */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4 mb-6">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
               <input
@@ -100,7 +155,10 @@ const CategoryPage: React.FC = () => {
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
               />
             </div>
-            <button className="flex items-center space-x-2 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50">
+            <button
+              onClick={() => setFiltersOpen(!filtersOpen)}
+              className="flex items-center space-x-2 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
               <Filter className="h-5 w-5" />
               <span>Filtres</span>
             </button>
@@ -119,26 +177,66 @@ const CategoryPage: React.FC = () => {
               </button>
             </div>
           </div>
+
+          {/* ✅ FILTRES AVANCÉS */}
+          <AdvancedFilters
+            category={category as CategoryType}
+            filters={filters}
+            onFiltersChange={setFilters}
+            isOpen={filtersOpen}
+            onToggle={() => setFiltersOpen(!filtersOpen)}
+          />
         </div>
       </div>
 
       {/* Contenu */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Chargement des produits...</p>
+          <div>
+            <div className="flex justify-between items-center mb-6">
+              <div className="h-6 bg-gray-200 rounded w-48 animate-pulse"></div>
+            </div>
+            <ProductGridSkeleton count={8} />
           </div>
         ) : (
           <>
-            {/* Résultats */}
+            {/* ✅ RÉSULTATS AVEC FILTRES */}
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold text-gray-900">
                 {filteredProducts.length} produit{filteredProducts.length !== 1 ? 's' : ''} trouvé{filteredProducts.length !== 1 ? 's' : ''}
+                {products.length !== filteredProducts.length && (
+                  <span className="text-gray-500 text-base font-normal">
+                    {' '}sur {products.length} total
+                  </span>
+                )}
               </h2>
+              
+              {/* Filtres actifs */}
+              {(filters.tags.length > 0 || filters.minScore > 0 || filters.verified !== null) && (
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-600">Filtres :</span>
+                  {filters.tags.map(tag => (
+                    <span
+                      key={tag}
+                      className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                  {filters.minScore > 0 && (
+                    <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
+                      Score ≥ {filters.minScore}%
+                    </span>
+                  )}
+                  {filters.verified !== null && (
+                    <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs">
+                      {filters.verified ? 'Vérifiés' : 'Non vérifiés'}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
 
-            {/* Grille produits */}
             {filteredProducts.length > 0 ? (
               <div className={`grid gap-6 ${
                 viewMode === 'grid' 
@@ -154,8 +252,23 @@ const CategoryPage: React.FC = () => {
                 <div className="text-6xl mb-4">🔍</div>
                 <h3 className="text-xl font-semibold text-gray-800 mb-2">Aucun produit trouvé</h3>
                 <p className="text-gray-600">
-                  Essayez de modifier votre recherche ou explorez d'autres catégories
+                  Essayez de modifier vos filtres ou votre recherche
                 </p>
+                <button
+                  onClick={() => {
+                    setFilters({
+                      priceRange: [0, 100],
+                      minScore: 0,
+                      verified: null,
+                      tags: [],
+                      zones: []
+                    });
+                    setSearchQuery('');
+                  }}
+                  className="mt-4 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
+                >
+                  Réinitialiser les filtres
+                </button>
               </div>
             )}
           </>
@@ -165,7 +278,7 @@ const CategoryPage: React.FC = () => {
   );
 };
 
-// Composant ProductCard simplifié
+// ProductCard component inchangé
 interface ProductCardProps {
   product: Product;
   viewMode: 'grid' | 'list';
@@ -184,6 +297,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode }) => {
         className={`object-cover ${
           isListMode ? 'w-24 h-24' : 'w-full h-48'
         }`}
+        onError={(e) => {
+          (e.target as HTMLImageElement).src = 'https://images.pexels.com/photos/4820813/pexels-photo-4820813.jpeg';
+        }}
       />
       <div className={`p-4 ${isListMode ? 'flex-1' : ''}`}>
         <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">

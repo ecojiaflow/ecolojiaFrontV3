@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X, Leaf, Search, ShoppingBag, BookOpen, Home, Info } from 'lucide-react';
+import { Menu, X, Leaf, Search, ShoppingBag, BookOpen, Home, Info, BarChart3 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from './LanguageSelector';
 
@@ -18,8 +18,9 @@ const Navbar: React.FC = () => {
         
         <div className="hidden md:flex items-center space-x-8">
           <NavLink to="/" icon={<Home size={18} />} label={t('common.home')} />
-          <NavLink to="#" icon={<ShoppingBag size={18} />} label={t('common.products')} />
-          <NavLink to="#" icon={<Search size={18} />} label={t('common.categories')} />
+          <NavLink to="/" icon={<ShoppingBag size={18} />} label={t('common.products')} />
+          <NavLink to="/" icon={<Search size={18} />} label={t('common.categories')} />
+          <NavLink to="/stats" icon={<BarChart3 size={18} />} label="Stats" />
           <NavLink to="/about" icon={<Info size={18} />} label={t('common.about')} />
           <NavLink to="#" icon={<BookOpen size={18} />} label={t('common.blog')} />
           <LanguageSelector />
@@ -37,8 +38,9 @@ const Navbar: React.FC = () => {
       {isMenuOpen && (
         <div className="md:hidden bg-white mt-4 py-2 px-6 space-y-4">
           <MobileNavLink to="/" label={t('common.home')} />
-          <MobileNavLink to="#" label={t('common.products')} />
-          <MobileNavLink to="#" label={t('common.categories')} />
+          <MobileNavLink to="/" label={t('common.products')} />
+          <MobileNavLink to="/" label={t('common.categories')} />
+          <MobileNavLink to="/stats" label="Stats" />
           <MobileNavLink to="/about" label={t('common.about')} />
           <MobileNavLink to="#" label={t('common.blog')} />
           <div className="pt-2">

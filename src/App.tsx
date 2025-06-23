@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import ErrorBoundary from './components/ErrorBoundary'; // ✅ Import ajouté
+import ErrorBoundary from './components/ErrorBoundary';
 import Navbar from './components/Navbar';
 import CategoryNavigation from './components/CategoryNavigation';
 import Footer from './components/Footer';
@@ -15,11 +15,9 @@ import ProductPage from './pages/ProductPage';
 import StatsPage from './pages/StatsPage';
 import CategoryPage from './pages/CategoryPage';
 
-import './index.css';
-
-function App() {
+const App: React.FC = () => {
   return (
-    <ErrorBoundary> {/* ✅ Wrapper ajouté */}
+    <ErrorBoundary>
       <Router>
         <div className="min-h-screen bg-gradient-to-br from-eco-leaf/5 to-white flex flex-col">
           <Navbar />
@@ -44,6 +42,6 @@ function App() {
       </Router>
     </ErrorBoundary>
   );
-}
+};
 
 export default App;

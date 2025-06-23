@@ -43,8 +43,8 @@ interface Product {
   enriched_at?: string;
 }
 
-const fallbackImage =
-  "https://via.placeholder.com/400x400?text=Produit";
+const fallbackImage = "/fallback.png";
+
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 

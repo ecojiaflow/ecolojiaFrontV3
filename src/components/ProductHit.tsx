@@ -17,8 +17,8 @@ interface HitProps {
   };
 }
 
-const fallbackImage =
-  "https://via.placeholder.com/300x200.png?text=Produit+%C3%89co";
+const fallbackImage = "/fallback.png";
+
 
 const ProductHit: React.FC<HitProps> = ({ hit }) => {
   const navigate = useNavigate();

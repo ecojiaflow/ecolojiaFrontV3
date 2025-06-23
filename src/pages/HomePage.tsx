@@ -2,6 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Leaf, Search, X, ChevronDown, Filter, Grid, List } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import SearchExperience from '../components/search/SearchExperience';
+
+
 
 // Import des composants existants
 import ProductHit from '../components/ProductHit';
@@ -526,12 +529,25 @@ const HomePage: React.FC = () => {
                 </div>
               )}
             </>
-          ) : hasSearched ? (
+        ) : hasSearched ? (
             <NoResultsFound 
               query={query} 
               onEnrichRequest={handleEnrichRequest}
             />
           ) : null}
+
+          {/* 🧪 TEST ALGOLIA INSTANTSEARCH - À RETIRER PLUS TARD */}
+          <section id="instantsearch-test" className="py-16 bg-gray-50 border-t border-gray-200 mt-16">
+            <div className="max-w-6xl mx-auto px-4">
+              <h2 className="text-2xl font-bold text-eco-text mb-6">
+                🔍 Nouvelle recherche (Test Algolia InstantSearch)
+              </h2>
+              <div className="bg-white rounded-xl shadow p-6">
+                <SearchExperience />
+              </div>
+            </div>
+          </section>
+
         </div>
       </section>
     </div>

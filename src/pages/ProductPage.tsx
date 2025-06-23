@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Leaf, Users, Shield } from "lucide-react";
+import { ArrowLeft, Users, Shield } from "lucide-react";
 
 import ConfidenceBadge from "../components/ConfidenceBadge";
 import PartnerLinks from "../components/PartnerLinks";
 import SimilarProductsCarousel from "../components/SimilarProductsCarousel";
+import EcoScoreBadge from "../components/EcoScoreBadge";
+
 interface Partner {
   id: string;
   name: string;
@@ -42,7 +44,7 @@ interface Product {
 }
 
 const fallbackImage =
-  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600' viewBox='0 0 600 600'%3E%3Crect width='600' height='600' fill='%23f0f0f0'/%3E%3Ctext x='50%25' y='50%25' font-size='24' fill='%23999' text-anchor='middle' dy='0.3em'%3EProduit%3C/text%3E%3C/svg%3E";
+  "https://via.placeholder.com/400x400?text=Produit";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 
@@ -165,20 +167,20 @@ const ProductPage: React.FC = () => {
           </div>
 
           {typeof product.eco_score === "number" && (
-            <div className="bg-eco-leaf/10 p-4 rounded-lg border border-eco-leaf/20">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-eco-text">Score écologique</p>
-                <span className="font-bold text-eco-text">
-                  {(product.eco_score * 100).toFixed(0)}%
-                </span>
+            <>
+              <EcoScoreBadge
+                score={product.eco_score}
+                confidenceColor={product.confidence_color}
+              />
+              <div className="text-xs text-gray-500 mt-2">
+                <p className="mb-1 font-medium">🔍 Légende du score écologique :</p>
+                <ul className="list-disc ml-5 space-y-1">
+                  <li><span className="text-green-600 font-medium">Vert</span> : produit très écoresponsable</li>
+                  <li><span className="text-yellow-500 font-medium">Jaune</span> : score modéré</li>
+                  <li><span className="text-red-500 font-medium">Rouge</span> : score faible ou à vérifier</li>
+                </ul>
               </div>
-              <div className="w-full bg-eco-leaf/20 h-3 mt-2 rounded-full overflow-hidden">
-                <div
-                  className="h-3 bg-eco-leaf rounded-full transition-all duration-500"
-                  style={{ width: `${product.eco_score * 100}%` }}
-                ></div>
-              </div>
-            </div>
+            </>
           )}
 
           <p className="text-gray-700">{product.description}</p>
@@ -217,7 +219,6 @@ const ProductPage: React.FC = () => {
         <PartnerLinks partnerLinks={product.partnerLinks} productTitle={product.title} />
       </div>
 
-      {/* ✅ Bloc suggestions similaires */}
       <div className="mt-12 border-t pt-6">
         <SimilarProductsCarousel productId={product.id} />
       </div>

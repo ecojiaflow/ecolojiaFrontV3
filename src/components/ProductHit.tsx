@@ -1,58 +1,73 @@
-import React from 'react';
-import ProductCard from './ProductCard';
-import ConfidenceBadge from './ConfidenceBadge';
-import { Product } from '../types';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { Shield } from "lucide-react";
+import EcoScoreBadge from "./EcoScoreBadge";
 
-interface ProductHitProps {
-  hit: any;
+interface HitProps {
+  hit: {
+    id: string;
+    title: string;
+    slug?: string;
+    brand?: string;
+    image_url?: string;
+    eco_score?: number;
+    confidence_pct?: number;
+    confidence_color?: "green" | "yellow" | "red";
+    verified_status?: string;
+  };
 }
 
-const getConfidenceColor = (confidence: number): 'green' | 'yellow' | 'red' => {
-  if (confidence >= 80) return 'green';
-  if (confidence >= 60) return 'yellow';
-  return 'red';
-};
+const fallbackImage =
+  "https://via.placeholder.com/300x200.png?text=Produit+%C3%89co";
 
-const ProductHit: React.FC<ProductHitProps> = ({ hit }) => {
-  const getImageUrl = (hit: any): string => {
-    const imageMap: { [key: string]: string } = {
-      'savon-alep-artisanal': 'https://res.cloudinary.com/dma0ywmfb/image/upload/w_400,h_400,c_fill,q_auto,f_auto/v1750024282/savon-alep_txl6yj.jpg',
-    };
+const ProductHit: React.FC<HitProps> = ({ hit }) => {
+  const navigate = useNavigate();
 
-    if (imageMap[hit.slug]) return imageMap[hit.slug];
-    if (hit.image_url?.trim()) return hit.image_url.trim();
-    if (Array.isArray(hit.images) && hit.images[0]) return hit.images[0];
-    return '/placeholder-image.jpg';
-  };
-
-  const confidencePct = typeof hit.confidence_pct === 'string' ? parseInt(hit.confidence_pct) : hit.confidence_pct;
-  const confidenceColor = hit.confidence_color || getConfidenceColor(confidencePct);
-
-  const adaptedProduct: Product = {
-    ...hit,
-    image_url: getImageUrl(hit),
-    tagsKeys: hit.tags || [],
-    zonesDisponibles: hit.zones_dispo || [],
-    brandKey: hit.brandKey || hit.brand || '',
-    descriptionKey: hit.descriptionKey || hit.description || '',
-    nameKey: hit.nameKey || hit.title || '',
-    aiConfidence: typeof hit.ai_confidence === 'string' ? parseFloat(hit.ai_confidence) : hit.ai_confidence,
-    confidence_pct: confidencePct,
-    confidence_color: confidenceColor,
-    ethicalScore: typeof hit.eco_score === 'string' ? parseFloat(hit.eco_score) : hit.eco_score,
-    partnerLinks: hit.partnerLinks || [],
-    price: typeof hit.price === 'string' ? parseFloat(hit.price) : hit.price || 0,
-    currency: hit.currency || 'EUR',
-    verified: hit.verified_status === 'verified',
+  const handleClick = () => {
+    if (hit.slug) {
+      navigate(`/product/${hit.slug}`);
+    } else {
+      console.warn("Produit sans slug détecté", hit);
+    }
   };
 
   return (
-    <ProductCard
-      product={adaptedProduct}
-      onClick={() => {
-        window.location.href = `/product/${hit.slug}`;
-      }}
-    />
+    <div
+      onClick={handleClick}
+      className="cursor-pointer bg-white border border-gray-200 rounded-xl shadow hover:shadow-md transition p-4 flex flex-col gap-3"
+    >
+      {/* Image produit */}
+      <div className="aspect-[4/3] bg-gray-100 rounded overflow-hidden border">
+        <img
+          src={hit.image_url || fallbackImage}
+          alt={hit.title}
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            (e.currentTarget as HTMLImageElement).src = fallbackImage;
+          }}
+        />
+      </div>
+
+      {/* Infos */}
+      <div className="flex flex-col gap-1">
+        {hit.brand && (
+          <p className="text-xs text-gray-500 uppercase">{hit.brand}</p>
+        )}
+        <h3 className="text-sm font-semibold text-eco-text line-clamp-2">{hit.title}</h3>
+
+        <EcoScoreBadge
+          score={hit.eco_score ?? 0}
+          confidenceColor={hit.confidence_color}
+        />
+
+        {hit.verified_status === "verified" && (
+          <div className="flex items-center gap-1 text-green-600 text-xs mt-1">
+            <Shield className="w-4 h-4" />
+            Vérifié
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 

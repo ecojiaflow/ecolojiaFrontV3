@@ -1,11 +1,12 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import App from './App'; // ✅ Corrigé : sans extension
-import './i18n';
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import App from './App'; // ❗️ Pas .tsx ici
+
+import './i18n'; // ✅ Assure-toi que ce fichier existe
 import './index.css';
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
     <App />
-  </React.StrictMode>
+  </StrictMode>
 );

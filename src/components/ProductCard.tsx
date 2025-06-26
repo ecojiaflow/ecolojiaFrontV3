@@ -30,19 +30,19 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) => {
     ? product.tagsKeys.map(tagKey => t(tagKey) || tagKey || t('common.unknownTag'))
     : [];
 
-  // Gestion intelligente des images avec fallback
+  // Gestion intelligente des images SANS fallback.png
   const getImageUrl = () => {
-    // 1. Essayer l'image principale
-    if (product.image_url?.trim()) {
+    // 1. Essayer l'image principale (et éviter fallback.png)
+    if (product.image_url?.trim() && !product.image_url.includes('fallback')) {
       return product.image_url.trim();
     }
     
     // 2. Essayer la première image du tableau
-    if (product.images?.[0]) {
+    if (product.images?.[0] && !product.images[0].includes('fallback')) {
       return product.images[0];
     }
     
-    // 3. Fallback par catégorie avec Unsplash
+    // 3. Fallback par catégorie avec Unsplash UNIQUEMENT
     const categoryFallbacks: Record<string, string> = {
       'Alimentation': 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&h=400&fit=crop&q=80',
       'Cosmétiques': 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&h=400&fit=crop&q=80',
@@ -68,10 +68,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) => {
     setImageError(true);
     setImageLoading(false);
     
-    // Fallback final vers l'image locale
+    // ❌ SUPPRIMÉ: Plus de référence à fallback.png
+    // Fallback vers Unsplash seulement
     const target = e.target as HTMLImageElement;
-    if (target.src !== '/fallback.png') {
-      target.src = '/fallback.png';
+    if (!target.src.includes('unsplash.com')) {
+      target.src = 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=400&fit=crop&q=80';
     }
   };
 
@@ -97,7 +98,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) => {
           </div>
         )}
 
-        {/* Image principale ou fallback */}
+        {/* Image principale ou fallback Unsplash */}
         {!imageError ? (
           <img 
             src={imageUrl}
@@ -110,9 +111,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) => {
             loading="lazy"
           />
         ) : (
-          // Fallback élégant si toutes les images échouent
-          <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-            <div className="text-center text-gray-500">
+          // Fallback élégant avec couleurs éco
+          <div className="w-full h-full bg-gradient-to-br from-green-50 to-green-100 flex items-center justify-center">
+            <div className="text-center text-green-600">
               <Package className="mx-auto h-12 w-12 mb-2" />
               <p className="text-sm font-medium">Produit éco</p>
               <p className="text-xs">{product.category || 'Écologique'}</p>
@@ -138,13 +139,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) => {
         <div className={`absolute bottom-3 left-3 ${scoreColor()} text-white px-3 py-1.5 rounded-full text-sm font-medium shadow-sm`}>
           {(product.ethicalScore || 0).toFixed(1)}
         </div>
-
-        {/* Indicateur d'erreur image (temporaire) */}
-        {imageError && (
-          <div className="absolute bottom-3 right-3 bg-amber-100 text-amber-800 px-2 py-1 rounded-full text-xs font-medium border border-amber-200">
-            Image simulée
-          </div>
-        )}
 
         {/* Analyse IA en cours */}
         {!product.verified && !product.aiConfidence && (
@@ -186,7 +180,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onClick }) => {
         </div>
       </div>
 
-      {/* Lien partenaire */}
+      {/* Lien partenaire - ✅ SYNTAXE CORRIGÉE */}
       <div className="px-6 pb-6 pt-0 mt-auto">
         {trackingUrl ? (
           

@@ -14,8 +14,8 @@ export interface Product {
 }
 
 export const getProductImage = (product: Product): string => {
-  // 1. Si image fournie et valide, l'utiliser
-  if (product.image && product.image.trim() !== '') {
+  // 1. Si image fournie et valide, l'utiliser (éviter fallback local)
+  if (product.image && product.image.trim() !== '' && !product.image.includes('fallback')) {
     // Vérifier si c'est une URL Unsplash valide
     if (product.image.includes('unsplash.com')) {
       return product.image;
@@ -47,13 +47,17 @@ export const getProductImage = (product: Product): string => {
   return categoryFallbacks[product.category] || 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=400&fit=crop&q=80';
 };
 
+// ❌ SUPPRIMÉ: return '/fallback.png';
 export const getFallbackImage = (): string => {
-  return '/fallback.png';
+  return 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=400&fit=crop&q=80';
 };
 
 export const handleImageError = (event: React.SyntheticEvent<HTMLImageElement, Event>) => {
   const img = event.currentTarget;
-  if (img.src !== '/fallback.png') {
-    img.src = '/fallback.png';
+  // ❌ SUPPRIMÉ: if (img.src !== '/fallback.png') { img.src = '/fallback.png'; }
+  
+  // ✅ NOUVEAU: Fallback Unsplash uniquement
+  if (!img.src.includes('unsplash.com')) {
+    img.src = 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=400&fit=crop&q=80';
   }
 };

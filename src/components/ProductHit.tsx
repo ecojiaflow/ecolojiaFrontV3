@@ -14,14 +14,31 @@ interface HitProps {
     confidence_pct?: number;
     confidence_color?: "green" | "yellow" | "red";
     verified_status?: string;
+    category?: string;
   };
 }
 
-const fallbackImage = "/fallback.png";
-
+// ❌ SUPPRIMÉ: const fallbackImage = "/fallback.png";
+const fallbackImage = "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=400&fit=crop&q=80";
 
 const ProductHit: React.FC<HitProps> = ({ hit }) => {
   const navigate = useNavigate();
+
+  // Gestion intelligente des images
+  const getHitImage = () => {
+    if (hit.image_url?.trim() && !hit.image_url.includes('fallback')) {
+      return hit.image_url.trim();
+    }
+    
+    // Fallback par catégorie
+    const categoryFallbacks: Record<string, string> = {
+      'Alimentation': 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&h=400&fit=crop&q=80',
+      'Cosmétiques': 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&h=400&fit=crop&q=80',
+      'Maison': 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=400&fit=crop&q=80'
+    };
+    
+    return categoryFallbacks[hit.category || ''] || fallbackImage;
+  };
 
   const handleClick = () => {
     if (hit.slug) {
@@ -39,11 +56,14 @@ const ProductHit: React.FC<HitProps> = ({ hit }) => {
       {/* Image produit */}
       <div className="aspect-[4/3] bg-gray-100 rounded overflow-hidden border">
         <img
-          src={hit.image_url || fallbackImage}
+          src={getHitImage()}
           alt={hit.title}
           className="w-full h-full object-cover"
           onError={(e) => {
-            (e.currentTarget as HTMLImageElement).src = fallbackImage;
+            const target = e.currentTarget as HTMLImageElement;
+            if (!target.src.includes('unsplash.com')) {
+              target.src = fallbackImage;
+            }
           }}
         />
       </div>

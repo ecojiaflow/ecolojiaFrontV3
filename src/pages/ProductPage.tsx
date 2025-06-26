@@ -43,8 +43,8 @@ interface Product {
   enriched_at?: string;
 }
 
-const fallbackImage = "/fallback.png";
-
+// ❌ SUPPRIMÉ: const fallbackImage = "/fallback.png";
+const fallbackImage = "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=400&fit=crop&q=80";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 
@@ -56,6 +56,22 @@ const ProductPage: React.FC = () => {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Gestion intelligente des images
+  const getProductImage = (product: Product) => {
+    if (product.image_url?.trim() && !product.image_url.includes('fallback')) {
+      return product.image_url.trim();
+    }
+    
+    // Fallback par catégorie
+    const categoryFallbacks: Record<string, string> = {
+      'Alimentation': 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&h=400&fit=crop&q=80',
+      'Cosmétiques': 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&h=400&fit=crop&q=80',
+      'Maison': 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=400&fit=crop&q=80'
+    };
+    
+    return categoryFallbacks[product.category || ''] || fallbackImage;
+  };
 
   useEffect(() => {
     if (!slug) {
@@ -135,11 +151,14 @@ const ProductPage: React.FC = () => {
         <div>
           <div className="aspect-square bg-gray-100 rounded-xl overflow-hidden border border-eco-leaf/20">
             <img
-              src={product.image_url || fallbackImage}
+              src={getProductImage(product)}
               alt={product.title}
               className="w-full h-full object-cover"
               onError={(e) => {
-                (e.currentTarget as HTMLImageElement).src = fallbackImage;
+                const target = e.currentTarget as HTMLImageElement;
+                if (!target.src.includes('unsplash.com')) {
+                  target.src = fallbackImage;
+                }
               }}
             />
           </div>
